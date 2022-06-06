@@ -1,32 +1,54 @@
-// const path = require(path);
-// const router = require('express').Router();
-// const db = require('../db/db.json');
-// const md = path.join(__dirname, './public');
+const path = require('path');
+const router = require('express').Router();
+const md = path.join(__dirname, './public');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
-// router.get('/notes', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../db/db.json'));
-// //   return res.json(db);
-// });
+let db = require('../db/db.json');
 
-// router.get('/animals/:id', (req, res) => {
-//   const result = findById(req.params.id, animals);
-//   if (result) {
-//     res.json(result);
-//   } else {
-//     res.send(404);
-//   }
-// });
+router.get('/notes', (req, res) => {
+  res.sendFile(path.join(__dirname, '../db/db.json'));
+});
 
-// router.post('/animals', (req, res) => {
-//   // set id based on what the next index of the array will be
-//   req.body.id = animals.length.toString();
+router.post('/notes', (req, res) => {
+  let save = req.body;
+  save.id = uuidv4();
+  db.push(save);
+  fs.writeFile(path.join(__dirname, '../db/db.json'),
+  JSON.stringify(db),
+  function(err) {
+    if(err) {
+      console.log(err);
+      res.status(500).send('An error occured while saving please try again.')
+    } else {
+      res.json(save)
+    };
+  }
+  );
+});
 
-//   if (!validateAnimal(req.body)) {
-//     res.status(400).send('The animal is not properly formatted.');
-//   } else {
-//     const animal = createNewAnimal(req.body, animals);
-//     res.json(animal);
-//   }
-// });
+router.delete('/notes/:id', (req, res) => {
+  db = db.filter(note => note.id !== req.params.id)
+  fs.writeFile(path.join(__dirname, '../db/db.json'),
+  JSON.stringify(db),
+  function(err) {
+    if(err) {
+      console.log(err);
+      res.status(500).send('An error occured while deleting please try again.')
+    } else {
+      res.json(db)
+    };
+  }
+  );
+  // this code is explaining how filter works here for my situational awareness
+ /*  const newDb = [];
+  for(let i=0; i<db.length; i++) {
+    const note = db[i];
+    if (note.id !== req.params.id) {
+      newDb.push(note);
+    }
+  }
+  db = newDb;*/ 
+});
 
-// module.exports = router;
+module.exports = router;
